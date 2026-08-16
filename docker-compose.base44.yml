@@ -1,0 +1,98 @@
+services:
+  mongodb:
+    image: mongo:8.0
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: node:24
+    working_dir: /app
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - client_node_modules:/app/client/node_modules
+    ports:
+      - "3080:3080"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      setup:
+        condition: service_completed_successfully
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PORT=3080
+      - MONGO_URI=mongodb://mongodb:27017/LibreChat
+      - DOMAIN_CLIENT=http://localhost:3000
+      - DOMAIN_SERVER=http://localhost:3080
+      - NO_INDEX=true
+      - ALLOW_EMAIL_LOGIN=true
+      - ALLOW_REGISTRATION=true
+      - ALLOW_SOCIAL_LOGIN=false
+      - ALLOW_UNVERIFIED_EMAIL_LOGIN=true
+      - SESSION_EXPIRY=900000
+      - REFRESH_TOKEN_EXPIRY=604800000
+      - OPENAI_API_KEY=user_provided
+      - ANTHROPIC_API_KEY=user_provided
+      - GOOGLE_KEY=user_provided
+      - ASSISTANTS_API_KEY=user_provided
+      - SEARCH=false
+    env_file:
+      - /run/base44/app.env
+    command: >
+      bash -c "npx nodemon --watch api --watch packages --ext js,json,mjs,cjs api/server/index.js"
+    restart: unless-stopped
+
+  client:
+    image: node:24
+    working_dir: /app/client
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - client_node_modules:/app/client/node_modules
+    ports:
+      - "3000:3090"
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+      api:
+        condition: service_started
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PORT=3090
+      - BACKEND_PORT=3080
+      - BACKEND_HOST=api
+      - VITE_ALLOWED_HOSTS=3000-${BASE44_PUBLIC_HOST_SUFFIX}
+    command: >
+      bash -c "npx vite --host 0.0.0.0 --port 3090"
+    restart: unless-stopped
+
+  setup:
+    image: node:24
+    working_dir: /app
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - client_node_modules:/app/client/node_modules
+    command: >
+      bash -c "
+        npm install --include=dev &&
+        npm run build:data-provider &&
+        npm run build:data-schemas &&
+        npm run build:api &&
+        npm run build:client-package &&
+        mkdir -p client/dist &&
+        echo '<!DOCTYPE html><html><head><base href=\"/\"></head><body>dev</body></html>' > client/dist/index.html
+      "
+
+volumes:
+  mongo-data:
+  node_modules:
+  client_node_modules:
