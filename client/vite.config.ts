@@ -33,9 +33,10 @@ const NODE_POLYFILL_SHIMS: Record<string, string> = {
 const backendPort = (process.env.BACKEND_PORT && Number(process.env.BACKEND_PORT)) || 3080;
 /** IPv6 hosts arrive unbracketed (valid for the listen address) but must be
  *  bracketed inside a URL, or the proxy target parses as host `:` port soup. */
-const backendHost = process.env.HOST?.includes(':') ? `[${process.env.HOST}]` : process.env.HOST;
-const backendURL = backendHost
-  ? `http://${backendHost}:${backendPort}`
+const backendHost = process.env.BACKEND_HOST || process.env.HOST;
+const resolvedBackendHost = backendHost?.includes(':') ? `[${backendHost}]` : backendHost;
+const backendURL = resolvedBackendHost
+  ? `http://${resolvedBackendHost}:${backendPort}`
   : `http://localhost:${backendPort}`;
 const buildSourceMap = process.env.NODE_ENV === 'development';
 const QUERY_DEVTOOLS_CHUNK_MODULES = [
@@ -50,7 +51,9 @@ export default defineConfig(({ command }) => ({
   base: '',
   server: {
     allowedHosts:
-      (process.env.VITE_ALLOWED_HOSTS && process.env.VITE_ALLOWED_HOSTS.split(',')) || [],
+      process.env.VITE_ALLOWED_HOSTS === 'true'
+        ? true
+        : (process.env.VITE_ALLOWED_HOSTS && process.env.VITE_ALLOWED_HOSTS.split(',')) || [],
     host: process.env.HOST || 'localhost',
     port: (process.env.PORT && Number(process.env.PORT)) || 3090,
     strictPort: false,

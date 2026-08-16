@@ -1,0 +1,109 @@
+services:
+  mongodb:
+    image: mongo:8.0
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    command: mongod --noauth
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: node:22
+    working_dir: /app
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - client_node_modules:/app/client/node_modules
+    ports:
+      - "3080:3080"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      setup:
+        condition: service_completed_successfully
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PORT=3080
+      - MONGO_URI=mongodb://mongodb:27017/LibreChat
+      - MEILI_HOST=http://meilisearch:7700
+      - MEILI_MASTER_KEY=base44devkey123
+      - SEARCH=false
+      - ALLOW_REGISTRATION=true
+      - ALLOW_EMAIL_LOGIN=true
+      - ALLOW_UNVERIFIED_EMAIL_LOGIN=true
+      - OPENAI_API_KEY=user_provided
+      - ANTHROPIC_API_KEY=user_provided
+      - GOOGLE_KEY=user_provided
+      - SESSION_EXPIRY=900000
+      - REFRESH_TOKEN_EXPIRY=604800000
+      - DOMAIN_CLIENT=http://localhost:3090
+      - DOMAIN_SERVER=http://localhost:3080
+    command: npx nodemon api/server/index.js
+    env_file:
+      - /run/base44/app.env
+
+  client:
+    image: node:22
+    working_dir: /app
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - client_node_modules:/app/client/node_modules
+    ports:
+      - "3000:3090"
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+      api:
+        condition: service_started
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PORT=3090
+      - BACKEND_HOST=api
+      - BACKEND_PORT=3080
+      - VITE_ALLOWED_HOSTS=true
+      - BASE44_PUBLIC_HOST_SUFFIX=${BASE44_PUBLIC_HOST_SUFFIX}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: sh -c "cd client && npx vite --host 0.0.0.0 --port 3090"
+
+  setup:
+    image: node:22
+    working_dir: /app
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - client_node_modules:/app/client/node_modules
+    command: >
+      sh -c "
+        if [ ! -d node_modules/.package-lock.json ] || [ package-lock.json -nt node_modules/.package-lock.json ]; then
+          npm install --ignore-scripts && npm run build:packages
+        else
+          npm run build:packages
+        fi &&
+        mkdir -p client/dist &&
+        echo '<!DOCTYPE html><html><head><base href=\"/\"/></head><body></body></html>' > client/dist/index.html
+      "
+    environment:
+      - NODE_ENV=development
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.35.1
+    restart: unless-stopped
+    environment:
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_MASTER_KEY=base44devkey123
+    volumes:
+      - meili-data:/meili_data
+
+volumes:
+  mongo-data:
+  meili-data:
+  node_modules:
+  client_node_modules:
