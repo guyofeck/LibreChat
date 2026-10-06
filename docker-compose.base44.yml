@@ -1,0 +1,106 @@
+# Base44 development stack: runs LibreChat from the cloned source with live reload.
+# Preview (port 3000) = Vite dev server; /api and /oauth are proxied to the Express API.
+x-node-app: &node-app
+  image: node:24
+  working_dir: /app
+  volumes:
+    - ./:/app
+    - librechat_data:/base44-data
+  env_file:
+    - /run/base44/app.env
+
+x-app-env: &app-env
+  NODE_OPTIONS: --max-old-space-size=4096
+  MONGO_URI: mongodb://mongodb:27017/LibreChat
+  DOMAIN_CLIENT: https://3000-${BASE44_PUBLIC_HOST_SUFFIX}
+  DOMAIN_SERVER: https://3000-${BASE44_PUBLIC_HOST_SUFFIX}
+  LIBRECHAT_TEMP_CREDENTIALS_PATH: /base44-data/.env.temp
+  TRUST_PROXY: "1"
+  SEARCH: "false"
+  NO_INDEX: "true"
+  ALLOW_EMAIL_LOGIN: "true"
+  ALLOW_REGISTRATION: "true"
+  ALLOW_UNVERIFIED_EMAIL_LOGIN: "true"
+  ALLOW_SOCIAL_LOGIN: "false"
+  ALLOW_SOCIAL_REGISTRATION: "false"
+  CHOKIDAR_USEPOLLING: "true"
+
+services:
+  mongodb:
+    image: mongo:8
+    command: mongod --noauth
+    restart: on-failure
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # One-shot: install deps (only when the lockfile changes) and build the shared workspace packages.
+  setup:
+    <<: *node-app
+    environment:
+      <<: *app-env
+    command:
+      - sh
+      - -ec
+      - |
+        STAMP=node_modules/.base44-lock.sha
+        SUM=$$(sha256sum package-lock.json | cut -d' ' -f1)
+        if [ ! -f "$$STAMP" ] || [ "$$(cat $$STAMP)" != "$$SUM" ]; then
+          CI=true npm ci --no-audit --no-fund
+          echo "$$SUM" > "$$STAMP"
+        fi
+        npm run build:packages
+        # The API reads client/dist/index.html at boot for its SPA fallback; Vite serves the real UI in dev.
+        [ -f client/dist/index.html ] || { mkdir -p client/dist && cp client/index.html client/dist/index.html; }
+
+  api:
+    <<: *node-app
+    restart: on-failure
+    environment:
+      <<: *app-env
+      HOST: 0.0.0.0
+      PORT: "3080"
+    command: ["sh", "-ec", "exec npx nodemon --legacy-watch api/server/index.js"]
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      setup:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -m 5 http://localhost:3080/health >/dev/null || (echo 'api /health failed' && exit 1)"]
+      interval: 15s
+      timeout: 6s
+      retries: 5
+      start_period: 120s
+
+  client:
+    <<: *node-app
+    restart: on-failure
+    ports:
+      - "3000:3000"
+    environment:
+      <<: *app-env
+      NODE_ENV: development
+      # HOST is the backend host used by the Vite proxy; Vite itself binds 0.0.0.0 via --host.
+      HOST: api
+      BACKEND_PORT: "3080"
+      __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS:
+    command: ["sh", "-ec", "cd client && exec npx vite --host 0.0.0.0 --port 3000 --strictPort"]
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -m 5 -o /dev/null http://localhost:3000/ || (echo 'vite dev server failed' && exit 1)"]
+      interval: 15s
+      timeout: 6s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  mongo_data:
+  librechat_data:
