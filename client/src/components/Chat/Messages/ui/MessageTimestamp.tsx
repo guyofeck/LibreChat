@@ -1,15 +1,21 @@
 import { useTranslation } from 'react-i18next';
+import { useAtomValue } from 'jotai';
 import useTimeTick from '~/hooks/useTimeTick';
 import { getMessageTimestamp } from '~/utils';
+import { showMessageTimestampAtom } from '~/store/showMessageTimestamp';
 
 type Timestamp = NonNullable<ReturnType<typeof getMessageTimestamp>>;
 
-function TimestampText({ timestamp }: { timestamp: Timestamp }) {
+function TimestampText({ timestamp, alwaysVisible = false }: { timestamp: Timestamp; alwaysVisible?: boolean }) {
   return (
     <time
       dateTime={timestamp.iso}
       title={timestamp.isRecent ? timestamp.absolute : undefined}
-      className="ml-2 text-xs font-normal text-text-secondary transition-opacity duration-200 group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:hover)]:opacity-0"
+      className={
+        alwaysVisible
+          ? 'ml-2 text-xs font-normal text-text-secondary'
+          : 'ml-2 text-xs font-normal text-text-secondary transition-opacity duration-200 group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:hover)]:opacity-0'
+      }
     >
       {timestamp.isRecent ? timestamp.relative : timestamp.absolute}
     </time>
@@ -18,7 +24,7 @@ function TimestampText({ timestamp }: { timestamp: Timestamp }) {
 
 /** Only recent timestamps subscribe to the shared minute ticker, so the
  * per-minute sweep re-renders a handful of rows instead of every message. */
-function RecentTimestamp({ value, language }: { value?: string | null; language: string }) {
+function RecentTimestamp({ value, language, alwaysVisible = false }: { value?: string | null; language: string; alwaysVisible?: boolean }) {
   useTimeTick();
   const timestamp = getMessageTimestamp(value, language);
 
@@ -26,7 +32,7 @@ function RecentTimestamp({ value, language }: { value?: string | null; language:
     return null;
   }
 
-  return <TimestampText timestamp={timestamp} />;
+  return <TimestampText timestamp={timestamp} alwaysVisible={alwaysVisible} />;
 }
 
 /**
@@ -38,6 +44,7 @@ function RecentTimestamp({ value, language }: { value?: string | null; language:
  */
 export default function MessageTimestamp({ value }: { value?: string | null }) {
   const { i18n } = useTranslation();
+  const alwaysVisible = useAtomValue(showMessageTimestampAtom);
   const timestamp = getMessageTimestamp(value, i18n.language);
 
   if (!timestamp) {
@@ -45,8 +52,8 @@ export default function MessageTimestamp({ value }: { value?: string | null }) {
   }
 
   if (timestamp.isRecent) {
-    return <RecentTimestamp value={value} language={i18n.language} />;
+    return <RecentTimestamp value={value} language={i18n.language} alwaysVisible={alwaysVisible} />;
   }
 
-  return <TimestampText timestamp={timestamp} />;
+  return <TimestampText timestamp={timestamp} alwaysVisible={alwaysVisible} />;
 }

@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
+import { useAtomValue } from 'jotai';
 import MessageTimestamp from './MessageTimestamp';
 import { cn } from '~/utils';
+import { showMessageTimestampAtom } from '~/store/showMessageTimestamp';
 
 type MessageRowProps = {
   id?: string;
@@ -34,6 +36,7 @@ export default function MessageRow({
   isEditing = false,
 }: MessageRowProps) {
   const showAssistantHeader = !isCreatedByUser && !hasParallelContent;
+  const showMessageTimestamp = useAtomValue(showMessageTimestampAtom);
   let widthClass = 'w-full max-w-3xl';
   if (fullWidth) {
     widthClass = 'w-full max-w-full';
@@ -90,6 +93,12 @@ export default function MessageRow({
               <MessageTimestamp value={timestamp} />
             </h2>
           ))}
+
+        {isCreatedByUser && showMessageTimestamp && (
+          <div className="mb-1 select-none text-right text-xs font-normal text-text-secondary">
+            <MessageTimestamp value={timestamp} />
+          </div>
+        )}
 
         <div className={cn('flex w-full flex-col gap-1', isCreatedByUser && 'items-end')}>
           <div

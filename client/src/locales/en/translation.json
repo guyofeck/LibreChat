@@ -623,6 +623,8 @@
   "com_nav_settings": "Settings",
   "com_nav_shared_links": "Shared links",
   "com_nav_show_thinking": "Open Thinking Dropdowns by Default",
+  "com_nav_show_message_timestamp": "Show message timestamp",
+  "com_nav_info_show_message_timestamp": "When enabled, a timestamp is displayed next to each message in the chat. When disabled, the timestamp only appears on hover.",
   "com_nav_slash_command": "/-Command",
   "com_nav_slash_command_description": "Toggle command \"/\" for selecting a prompt via keyboard",
   "com_nav_smooth_streaming": "Smooth streaming text (fade in new words)",

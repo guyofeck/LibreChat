@@ -37,6 +37,7 @@ import { TokenCredits, AutoRefill } from './BillingControls';
 import AdminPanel from '../SettingsTabs/General/AdminPanel';
 import SharedLinks from '../SettingsTabs/Data/SharedLinks';
 import { showThinkingAtom } from '~/store/showThinking';
+import { showMessageTimestampAtom } from '~/store/showMessageTimestamp';
 import ProviderKeys from '../SettingsTabs/ProviderKeys';
 import Avatar from '../SettingsTabs/Account/Avatar';
 import About from '../SettingsTabs/About/About';
@@ -274,6 +275,19 @@ export const registry: SettingEntry[] = [
       stateAtom: showThinkingAtom,
       localizationKey: 'com_nav_show_thinking',
       switchId: 'showThinking',
+    }),
+  },
+  {
+    id: 'showMessageTimestamp',
+    tab: CHAT,
+    section: 'messages',
+    labelKey: 'com_nav_show_message_timestamp',
+    keywords: ['timestamp', 'time', 'date'],
+    Component: toggleControl({
+      stateAtom: showMessageTimestampAtom,
+      localizationKey: 'com_nav_show_message_timestamp',
+      switchId: 'showMessageTimestamp',
+      hoverCardText: 'com_nav_info_show_message_timestamp',
     }),
   },
   {
