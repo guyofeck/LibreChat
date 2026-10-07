@@ -81,7 +81,6 @@ export default function MessageRow({
             <h2 className="sr-only">
               {headerPrefix}
               {label}
-              <MessageTimestamp value={timestamp} />
             </h2>
           ) : (
             <h2 className="flex min-h-7 select-none items-center text-sm font-semibold text-text-primary">
@@ -90,6 +89,8 @@ export default function MessageRow({
               <MessageTimestamp value={timestamp} />
             </h2>
           ))}
+
+        {isCreatedByUser && <MessageTimestamp value={timestamp} />}
 
         <div className={cn('flex w-full flex-col gap-1', isCreatedByUser && 'items-end')}>
           <div

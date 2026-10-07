@@ -235,6 +235,18 @@ export const registry: SettingEntry[] = [
   },
   // Chat · Messages
   {
+    id: 'showMessageTimestamps',
+    tab: CHAT,
+    section: 'messages',
+    labelKey: 'com_nav_show_message_timestamps',
+    keywords: ['timestamp', 'time', 'date'],
+    Component: toggleControl({
+      stateAtom: store.showMessageTimestamps,
+      localizationKey: 'com_nav_show_message_timestamps',
+      switchId: 'showMessageTimestamps',
+    }),
+  },
+  {
     id: 'enableUserMsgMarkdown',
     tab: CHAT,
     section: 'messages',
