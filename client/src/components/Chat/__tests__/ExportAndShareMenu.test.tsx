@@ -1,9 +1,11 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import type { MenuItemProps } from '~/common';
 import '@testing-library/jest-dom';
 import ExportAndShareMenu from '../ExportAndShareMenu';
 
 let mockShareId: string | null = null;
+const mockCopyConversation = jest.fn();
 
 jest.mock('recoil', () => ({
   useRecoilValue: () => ({ conversationId: 'conversation-1' }),
@@ -20,9 +22,23 @@ jest.mock('@ariakit/react', () => ({
 }));
 
 jest.mock('@librechat/client', () => ({
-  DropdownPopup: ({ trigger }: { trigger: React.ReactNode }) => trigger,
+  DropdownPopup: ({ trigger, items }: { trigger: React.ReactNode; items: MenuItemProps[] }) => (
+    <>
+      {trigger}
+      {items.map((item) => (
+        <button key={item.label} onClick={item.onClick}>
+          {item.label}
+        </button>
+      ))}
+    </>
+  ),
   TooltipAnchor: ({ render }: { render: React.ReactNode }) => render,
   useMediaQuery: () => false,
+}));
+
+jest.mock('~/hooks/Conversations/useCopyConversation', () => ({
+  __esModule: true,
+  default: () => mockCopyConversation,
 }));
 
 jest.mock('~/hooks', () => ({
@@ -44,6 +60,12 @@ jest.mock('~/store', () => ({
   default: { conversationByIndex: () => ({}) },
 }));
 
+it('copies Markdown when the menu item is clicked, even when sharing is disabled', () => {
+  render(<ExportAndShareMenu isSharedButtonEnabled={false} />);
+  fireEvent.click(screen.getByRole('button', { name: 'com_ui_copy_as_markdown' }));
+  expect(mockCopyConversation).toHaveBeenCalledTimes(1);
+});
+
 describe('ExportAndShareMenu link status', () => {
   beforeEach(() => {
     mockShareId = null;
@@ -61,7 +83,7 @@ describe('ExportAndShareMenu link status', () => {
       '-top-0.5',
       'size-2',
     );
-    expect(screen.getByRole('button')).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'com_ui_export_share_link_active' })).toHaveAttribute(
       'aria-label',
       'com_ui_export_share_link_active',
     );
@@ -71,6 +93,9 @@ describe('ExportAndShareMenu link status', () => {
     render(<ExportAndShareMenu isSharedButtonEnabled={true} />);
 
     expect(screen.queryByTestId('header-shared-link-indicator')).not.toBeInTheDocument();
-    expect(screen.getByRole('button')).toHaveAttribute('aria-label', 'com_endpoint_export_share');
+    expect(screen.getByRole('button', { name: 'com_endpoint_export_share' })).toHaveAttribute(
+      'aria-label',
+      'com_endpoint_export_share',
+    );
   });
 });
