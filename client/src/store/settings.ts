@@ -48,6 +48,7 @@ const localStorageAtoms = {
   newChatSwitchToHistory: atomWithLocalStorage('newChatSwitchToHistory', true),
 
   // Chat settings
+  showMessageTimestamps: atomWithLocalStorage('showMessageTimestamps', false),
   enterToSend: atomWithLocalStorage('enterToSend', true),
   /** What Enter does while a run is generating: steer (inject mid-run) or queue (send after). */
   duringRunDefaultAction: atomWithLocalStorage<'steer' | 'queue'>(

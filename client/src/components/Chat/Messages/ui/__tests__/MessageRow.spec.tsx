@@ -50,6 +50,7 @@ describe('MessageRow', () => {
     expect(messageSurface).toHaveClass('bg-surface-tertiary', 'rounded-theme-surface');
     expect(screen.queryByTestId('message-icon')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { hidden: true })).toHaveClass('sr-only');
+    expect(screen.getByTestId('message-timestamp').closest('.sr-only')).toBeNull();
   });
 
   it('keeps assistant identity visible beside an open reading column', () => {

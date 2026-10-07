@@ -1,6 +1,8 @@
+import { useRecoilValue } from 'recoil';
 import { useTranslation } from 'react-i18next';
 import useTimeTick from '~/hooks/useTimeTick';
 import { getMessageTimestamp } from '~/utils';
+import store from '~/store';
 
 type Timestamp = NonNullable<ReturnType<typeof getMessageTimestamp>>;
 
@@ -9,7 +11,7 @@ function TimestampText({ timestamp }: { timestamp: Timestamp }) {
     <time
       dateTime={timestamp.iso}
       title={timestamp.isRecent ? timestamp.absolute : undefined}
-      className="ml-2 text-xs font-normal text-text-secondary transition-opacity duration-200 group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:hover)]:opacity-0"
+      className="ml-2 text-xs font-normal text-text-secondary"
     >
       {timestamp.isRecent ? timestamp.relative : timestamp.absolute}
     </time>
@@ -29,15 +31,15 @@ function RecentTimestamp({ value, language }: { value?: string | null; language:
   return <TimestampText timestamp={timestamp} />;
 }
 
-/**
- * Inline message timestamp shown next to the author name in the message header.
- * On hover-capable pointers it reveals on row hover/focus; on touch and other
- * non-hover devices it stays visible. Recent messages show the relative form
- * ("10 minutes ago") with the absolute date on hover; older messages show the
- * absolute date directly.
- */
+/** Inline timestamp controlled by the persisted chat display preference. */
 export default function MessageTimestamp({ value }: { value?: string | null }) {
+  const showMessageTimestamps = useRecoilValue(store.showMessageTimestamps);
   const { i18n } = useTranslation();
+
+  if (!showMessageTimestamps) {
+    return null;
+  }
+
   const timestamp = getMessageTimestamp(value, i18n.language);
 
   if (!timestamp) {

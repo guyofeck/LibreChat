@@ -78,11 +78,13 @@ export default function MessageRow({
       >
         {!hasParallelContent &&
           (isCreatedByUser ? (
-            <h2 className="sr-only">
-              {headerPrefix}
-              {label}
+            <>
+              <h2 className="sr-only">
+                {headerPrefix}
+                {label}
+              </h2>
               <MessageTimestamp value={timestamp} />
-            </h2>
+            </>
           ) : (
             <h2 className="flex min-h-7 select-none items-center text-sm font-semibold text-text-primary">
               <span className="sr-only">{headerPrefix}</span>
