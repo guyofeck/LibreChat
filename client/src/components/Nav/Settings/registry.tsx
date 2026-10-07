@@ -36,6 +36,7 @@ import { ClearChats } from '../SettingsTabs/Data/ClearChats';
 import { TokenCredits, AutoRefill } from './BillingControls';
 import AdminPanel from '../SettingsTabs/General/AdminPanel';
 import SharedLinks from '../SettingsTabs/Data/SharedLinks';
+import { showTimestampsAtom } from '~/store/showTimestamps';
 import { showThinkingAtom } from '~/store/showThinking';
 import ProviderKeys from '../SettingsTabs/ProviderKeys';
 import Avatar from '../SettingsTabs/Account/Avatar';
@@ -263,6 +264,18 @@ export const registry: SettingEntry[] = [
       localizationKey: 'com_nav_latex_parsing',
       switchId: 'latexParsing',
       hoverCardText: 'com_nav_info_latex_parsing',
+    }),
+  },
+  {
+    id: 'showTimestamps',
+    tab: CHAT,
+    section: 'messages',
+    labelKey: 'com_nav_show_timestamps',
+    keywords: ['timestamp', 'time', 'date'],
+    Component: toggleControl({
+      stateAtom: showTimestampsAtom,
+      localizationKey: 'com_nav_show_timestamps',
+      switchId: 'showTimestamps',
     }),
   },
   {
