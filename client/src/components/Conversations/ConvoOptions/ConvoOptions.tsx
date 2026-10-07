@@ -8,6 +8,7 @@ import {
   Ellipsis,
   Share2,
   CopyPlus,
+  ClipboardCopy,
   Archive,
   FolderInput,
   FolderX,
@@ -25,6 +26,7 @@ import {
   useArchiveConvoMutation,
   usePinConversationMutation,
 } from '~/data-provider';
+import useCopyConversation from '~/hooks/Conversations/useCopyConversation';
 import { useHasAccess, useLocalize, useNavigateToConvo, useNewConvo } from '~/hooks';
 import { NotificationSeverity } from '~/common';
 import { useChatContext } from '~/Providers';
@@ -81,6 +83,7 @@ function ConvoOptions({
     permission: Permissions.CREATE,
   });
 
+  const copyConversation = useCopyConversation(conversationId, title);
   const archiveConvoMutation = useArchiveConvoMutation();
   const assignConversationToProject = useAssignConversationToProjectMutation();
   const pinConvoMutation = usePinConversationMutation();
@@ -301,6 +304,16 @@ function ConvoOptions({
         ),
       },
       {
+        label: localize('com_ui_copy_as_markdown'),
+        onClick: () => copyConversation.mutate(),
+        disabled: copyConversation.isLoading || !conversationId,
+        icon: copyConversation.isLoading ? (
+          <Spinner className="size-4" />
+        ) : (
+          <ClipboardCopy className="icon-sm mr-2 text-text-primary" aria-hidden="true" />
+        ),
+      },
+      {
         label: localize('com_ui_change_project'),
         onClick: projectHandler,
         icon: <FolderInput className="icon-sm mr-2 text-text-primary" aria-hidden="true" />,
@@ -357,6 +370,8 @@ function ConvoOptions({
       handleArchiveClick,
       canCreateSharedLinks,
       handleDuplicateClick,
+      copyConversation,
+      conversationId,
       projectHandler,
       removeProjectHandler,
       chatProjectId,
