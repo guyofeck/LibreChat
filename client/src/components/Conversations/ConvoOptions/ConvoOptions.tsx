@@ -8,6 +8,7 @@ import {
   Ellipsis,
   Share2,
   CopyPlus,
+  ClipboardCopy,
   Archive,
   FolderInput,
   FolderX,
@@ -25,6 +26,7 @@ import {
   useArchiveConvoMutation,
   usePinConversationMutation,
 } from '~/data-provider';
+import useCopyConversation from '~/hooks/Conversations/useCopyConversation';
 import { useHasAccess, useLocalize, useNavigateToConvo, useNewConvo } from '~/hooks';
 import { NotificationSeverity } from '~/common';
 import { useChatContext } from '~/Providers';
@@ -62,6 +64,7 @@ function ConvoOptions({
   const { data: startupConfig } = useGetStartupConfig();
   const { navigateToConvo } = useNavigateToConvo(index);
   const { showToast } = useToastContext();
+  const copyConversation = useCopyConversation({ conversationId, title });
 
   const navigate = useNavigate();
   const { conversationId: currentConvoId } = useParams();
@@ -276,6 +279,11 @@ function ConvoOptions({
         render: (props) => <button {...props} />,
       },
       {
+        label: localize('com_ui_copy_as_markdown'),
+        onClick: copyConversation,
+        icon: <ClipboardCopy className="icon-sm mr-2 text-text-primary" aria-hidden="true" />,
+      },
+      {
         label: localize(isPinned ? 'com_ui_unpin' : 'com_ui_pin'),
         onClick: handlePinClick,
         hideOnClick: false,
@@ -345,6 +353,7 @@ function ConvoOptions({
     ],
     [
       localize,
+      copyConversation,
       isPinned,
       isPinLoading,
       shareHandler,

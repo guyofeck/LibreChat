@@ -1053,6 +1053,7 @@
   "com_ui_copied": "Copied",
   "com_ui_copied_to_clipboard": "Copied to clipboard",
   "com_ui_copy": "Copy",
+  "com_ui_copy_as_markdown": "Copy as Markdown",
   "com_ui_copy_code": "Copy code",
   "com_ui_copy_failed": "Failed to copy to clipboard",
   "com_ui_copy_link": "Copy link",
