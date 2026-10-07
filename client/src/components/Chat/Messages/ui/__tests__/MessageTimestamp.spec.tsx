@@ -77,6 +77,17 @@ describe('Message timestamp preference', () => {
     expect(container.querySelector('time')).not.toBeInTheDocument();
   });
 
+  it('renders older messages with a full date and time tooltip', () => {
+    localStorage.setItem('showMessageTimestamps', 'true');
+    const { container } = render(<TimestampSetting />);
+    const absolute = new Intl.DateTimeFormat('en', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(timestamp));
+
+    expect(container.querySelector('time')).toHaveAttribute('title', absolute);
+  });
+
   it('renders recent messages with an absolute date tooltip', () => {
     localStorage.setItem('showMessageTimestamps', 'true');
     const value = new Date(Date.now() - 60_000).toISOString();
@@ -84,7 +95,13 @@ describe('Message timestamp preference', () => {
     const time = container.querySelector('time');
 
     expect(time).toHaveAttribute('datetime', value);
-    expect(time).toHaveAttribute('title');
+    expect(time).toHaveAttribute(
+      'title',
+      new Intl.DateTimeFormat('en', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(value)),
+    );
     expect(time).toHaveTextContent('1 minute ago');
   });
 });

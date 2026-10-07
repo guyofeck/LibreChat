@@ -10,7 +10,7 @@ function TimestampText({ timestamp }: { timestamp: Timestamp }) {
   return (
     <time
       dateTime={timestamp.iso}
-      title={timestamp.isRecent ? timestamp.absolute : undefined}
+      title={timestamp.absolute}
       className="ml-2 text-xs font-normal text-text-secondary"
     >
       {timestamp.isRecent ? timestamp.relative : timestamp.absolute}
